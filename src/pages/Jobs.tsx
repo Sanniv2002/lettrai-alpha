@@ -1,14 +1,9 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Bot, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useJobsStore, type Job } from '../store/jobs';
 import { ResultViewer } from '../components/ResultViewer';
-
-const flowIcons = {
-  gemini_api: { icon: Brain, label: 'Gemini', color: 'text-blue-400' },
-  grok_api: { icon: Bot, label: 'Grok', color: 'text-purple-400' },
-  humanizer: { icon: Sparkles, label: 'Humanizer', color: 'text-amber-400' },
-};
+import { JobCard } from '../components/JobCard';
 
 const ITEMS_PER_PAGE = 5;
 
@@ -38,8 +33,6 @@ export function Jobs() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  console.log(jobs)
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -65,84 +58,12 @@ export function Jobs() {
             animate={{ opacity: 1 }}
             className="grid gap-4"
           >
-            {paginatedJobs.map((job, index) => (
-              <motion.div
+            {paginatedJobs.map((job) => (
+              <JobCard
                 key={job._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="gradient-border p-[1px]"
-              >
-                <div className="glass-container p-6 rounded-xl">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-semibold text-white">
-                          {job.type.toUpperCase()}
-                        </h3>
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            job.status === 'completed'
-                              ? 'bg-green-500/20 text-green-400'
-                              : job.status === 'failed'
-                              ? 'bg-red-500/20 text-red-400'
-                              : 'bg-yellow-500/20 text-yellow-400'
-                          }`}
-                        >
-                          {job.status}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center gap-4">
-                        {JSON.parse(job.flow.replace(/'/g, '"')).map((flow: string) => {
-                          const FlowIcon = flowIcons[flow as keyof typeof flowIcons]?.icon;
-                          const color = flowIcons[flow as keyof typeof flowIcons]?.color;
-                          return FlowIcon ? (
-                            <div
-                              key={flow}
-                              className={`flex items-center gap-2 ${color}`}
-                            >
-                              <FlowIcon size={16} />
-                              <span className="text-sm">
-                                {flowIcons[flow as keyof typeof flowIcons]?.label}
-                              </span>
-                            </div>
-                          ) : null;
-                        })}
-                      </div>
-
-                      <div className="text-sm text-gray-400 space-y-1">
-                        <p>Created: {new Date(job.created_at).toLocaleString()}</p>
-                        {job.completed_at && (
-                          <p>Completed: {new Date(job.completed_at).toLocaleString()}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {job.status === 'completed' && (
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => handleViewResult(job)}
-                        className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200"
-                      >
-                        View Result
-                      </motion.button>
-                    )}
-                  </div>
-
-                  {job.base_prompt && (
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium text-gray-300 mb-2">
-                        Job Description Preview
-                      </h4>
-                      <p className="text-sm text-gray-400 line-clamp-3">
-                        {job.base_prompt}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
+                job={job}
+                onViewResult={() => handleViewResult(job)}
+              />
             ))}
           </motion.div>
         )}

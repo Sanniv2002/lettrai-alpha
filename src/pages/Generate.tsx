@@ -24,6 +24,11 @@ export function Generate() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedExtensions.length === 0) {
+      setError('Please select at least one AI model');
+      return;
+    }
+    
     setError('');
     setIsSubmitting(true);
 
@@ -45,18 +50,6 @@ export function Generate() {
       setError('Failed to start generation. Please try again.');
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleExtensionToggle = (extension: string) => {
-    if (extension.includes(',')) {
-      setSelectedExtensions(extension.split(','));
-    } else {
-      setSelectedExtensions(prev => 
-        prev.includes(extension)
-          ? prev.filter(ext => ext !== extension)
-          : [...prev, extension]
-      );
     }
   };
 
@@ -173,13 +166,13 @@ export function Generate() {
               </label>
               <ExtensionSequence
                 selectedExtensions={selectedExtensions}
-                onExtensionToggle={handleExtensionToggle}
+                onExtensionToggle={setSelectedExtensions}
               />
             </div>
 
             <motion.button
               type="submit"
-              disabled={isSubmitting || selectedExtensions.length === 0}
+              disabled={isSubmitting}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg text-white font-medium shadow-lg shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"

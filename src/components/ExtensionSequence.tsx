@@ -34,6 +34,26 @@ const extensionConfig = {
 export function ExtensionSequence({ selectedExtensions, onExtensionToggle }: ExtensionSequenceProps) {
   const hasRequiredExtension = selectedExtensions.some(ext => REQUIRED_FIRST.includes(ext));
 
+  const handleExtensionClick = (ext: string) => {
+    if (REQUIRED_FIRST.includes(ext)) {
+      if (selectedExtensions.includes(ext)) {
+        // Remove the extension
+        onExtensionToggle(selectedExtensions.filter(e => e !== ext));
+      } else {
+        // Replace any other required extension with this one
+        const newExtensions = selectedExtensions.filter(e => !REQUIRED_FIRST.includes(e));
+        onExtensionToggle([...newExtensions, ext]);
+      }
+    } else if (OPTIONAL_SECOND.includes(ext) && hasRequiredExtension) {
+      // Toggle the humanizer extension
+      if (selectedExtensions.includes(ext)) {
+        onExtensionToggle(selectedExtensions.filter(e => e !== ext));
+      } else {
+        onExtensionToggle([...selectedExtensions, ext]);
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -52,13 +72,7 @@ export function ExtensionSequence({ selectedExtensions, onExtensionToggle }: Ext
                 key={ext}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  // Deselect other required extensions when selecting one
-                  if (!isSelected) {
-                    const newExtensions = selectedExtensions.filter(e => !REQUIRED_FIRST.includes(e));
-                    onExtensionToggle([...newExtensions, ext].join(','));
-                  }
-                }}
+                onClick={() => handleExtensionClick(ext)}
                 className={`
                   relative flex items-start gap-3 p-4 rounded-lg transition-all duration-200
                   ${isSelected ? [
@@ -104,11 +118,7 @@ export function ExtensionSequence({ selectedExtensions, onExtensionToggle }: Ext
                 key={ext}
                 whileHover={!isDisabled ? { scale: 1.02 } : {}}
                 whileTap={!isDisabled ? { scale: 0.98 } : {}}
-                onClick={() => {
-                  if (!isDisabled) {
-                    onExtensionToggle(ext);
-                  }
-                }}
+                onClick={() => !isDisabled && handleExtensionClick(ext)}
                 disabled={isDisabled}
                 className={`
                   relative flex items-start gap-3 p-4 rounded-lg transition-all duration-200
