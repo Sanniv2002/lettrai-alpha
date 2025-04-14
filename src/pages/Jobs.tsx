@@ -5,7 +5,7 @@ import { useJobsStore, type Job } from '../store/jobs';
 import { ResultViewer } from '../components/ResultViewer';
 import { JobCard } from '../components/JobCard';
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 10;
 
 export function Jobs() {
   const { jobs, fetchJobs, getJobResult, isLoading } = useJobsStore();
@@ -61,7 +61,7 @@ export function Jobs() {
             {paginatedJobs.map((job) => (
               <JobCard
                 key={job._id}
-                job={job}
+                job={job as any}
                 onViewResult={() => handleViewResult(job)}
               />
             ))}

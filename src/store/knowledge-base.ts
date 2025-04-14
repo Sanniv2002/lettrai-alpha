@@ -3,6 +3,7 @@ import { fetchApi } from '../lib/utils';
 
 export interface KnowledgeBase {
   id: string;
+  name: string,
   title: string;
   created_at: string;
 }

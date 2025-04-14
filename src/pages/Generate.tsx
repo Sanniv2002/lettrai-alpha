@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
@@ -6,15 +6,39 @@ import { fetchApi } from '../lib/utils';
 import { useKnowledgeBaseStore, type KnowledgeBase } from '../store/knowledge-base';
 import { ExtensionSequence } from '../components/ExtensionSequence';
 
+type ToneType = 'professional' | 'casual' | 'friendly';
+type LengthType = 'short' | 'medium' | 'long';
+
+const toneOptions: { value: ToneType; label: string }[] = [
+  { value: 'professional', label: 'Professional' },
+  { value: 'casual', label: 'Casual' },
+  { value: 'friendly', label: 'Friendly' },
+];
+
+const lengthOptions: { value: LengthType; label: string; description: string }[] = [
+  { value: 'short', label: 'Short', description: 'Concise and to the point' },
+  { value: 'medium', label: 'Medium', description: 'Balanced and descriptive' },
+  { value: 'long', label: 'Long', description: 'Detailed and comprehensive' },
+];
+
 export function Generate() {
   const [type, setType] = React.useState<'email' | 'cv'>('email');
+  const [tone, setTone] = React.useState<ToneType>('professional');
+  const [length, setLength] = React.useState<LengthType>('medium');
   const [jobDescription, setJobDescription] = React.useState('');
   const [selectedKbId, setSelectedKbId] = React.useState('');
   const [selectedExtensions, setSelectedExtensions] = React.useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string | null>(null);
+  const [includeHumanizer, setIncludeHumanizer] = useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState('');
   const [showRedirect, setShowRedirect] = React.useState(false);
-  
+
+  const handleUpdateSequence = (sequence: string[]) => {
+    setSelectedModel(sequence[0] ?? null);
+    setIncludeHumanizer(sequence.includes('humanizer'));
+  };
+
   const navigate = useNavigate();
   const { entries, fetchEntries, isLoading } = useKnowledgeBaseStore();
 
@@ -24,11 +48,15 @@ export function Generate() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedKbId) {
+      setError('Please select a resume');
+      return;
+    }
     if (selectedExtensions.length === 0) {
       setError('Please select at least one AI model');
       return;
     }
-    
+
     setError('');
     setIsSubmitting(true);
 
@@ -37,6 +65,8 @@ export function Generate() {
         method: 'POST',
         body: {
           type,
+          tone,
+          length,
           job_data: jobDescription,
           kb_id: selectedKbId,
           extensions: selectedExtensions,
@@ -103,6 +133,7 @@ export function Generate() {
               </motion.div>
             )}
 
+            {/* Type */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-300">
                 Type
@@ -127,6 +158,90 @@ export function Generate() {
               </div>
             </div>
 
+            {/* Tone */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-300">
+                Tone
+              </label>
+              <div className="flex gap-4">
+                {toneOptions.map(option => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setTone(option.value)}
+                    className={`
+                      flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-200
+                      ${tone === option.value
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-purple-500/25'
+                        : 'glass-container hover:border-purple-500/50'
+                      }
+                    `}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Length */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-300">
+                Length
+              </label>
+              <div className="grid grid-cols-3 gap-4">
+                {lengthOptions.map(option => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setLength(option.value)}
+                    className={`
+                      p-4 rounded-lg text-left transition-all duration-200
+                      ${length === option.value
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-purple-500/25'
+                        : 'glass-container hover:border-purple-500/50'
+                      }
+                    `}
+                  >
+                    <div className="font-medium">{option.label}</div>
+                    <div className="text-sm opacity-80">{option.description}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Resume Selection */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-300">
+                Select Resume (Knowledge Base)
+              </label>
+              <select
+                value={selectedKbId}
+                onChange={(e) => setSelectedKbId(e.target.value)}
+                required
+                className="w-full px-4 py-3 glass-container rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/20 transition-all duration-200"
+              >
+                <option value="">Select a resume...</option>
+                {entries.map((entry: KnowledgeBase) => (
+                  <option key={entry.id} value={entry.id}>
+                    {entry?.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Extension Sequence (AI models) */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-300">
+                Extensions
+              </label>
+              <ExtensionSequence
+                selectedModel={selectedModel}
+                includeHumanizer={includeHumanizer}
+                onUpdateSequence={handleUpdateSequence}
+              />
+            </div>
+
+            {/* Job Description */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-300">
                 Job Description
@@ -141,35 +256,7 @@ export function Generate() {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">
-                Select Resume (Knowledge Base)
-              </label>
-              <select
-                value={selectedKbId}
-                onChange={(e) => setSelectedKbId(e.target.value)}
-                required
-                className="w-full px-4 py-3 glass-container rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/20 transition-all duration-200"
-              >
-                <option value="">Select a resume...</option>
-                {entries.map((entry: KnowledgeBase) => (
-                  <option key={entry.id} value={entry.id}>
-                    {entry?.name || entry.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">
-                Extensions
-              </label>
-              <ExtensionSequence
-                selectedExtensions={selectedExtensions}
-                onExtensionToggle={setSelectedExtensions}
-              />
-            </div>
-
+            {/* Submit Button */}
             <motion.button
               type="submit"
               disabled={isSubmitting}
