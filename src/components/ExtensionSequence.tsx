@@ -3,9 +3,9 @@ import { motion } from 'framer-motion';
 import { Brain, Bot, Sparkles, ArrowRight, Cpu, Stars } from 'lucide-react';
 
 interface ExtensionSequenceProps {
-  selectedModel: string | null; // just one model selected at a time
-  includeHumanizer: boolean; // optional second step
-  onUpdateSequence: (sequence: string[]) => void; // final constructed array
+  selectedModel: string | null;
+  includeHumanizer: boolean;
+  onUpdateSequence: (model: string | null, humanizer: boolean) => void;
 }
 
 const REQUIRED_FIRST = ['gemini_api', 'grok_api', 'openai_api', 'deepseek_api'];
@@ -51,19 +51,12 @@ export function ExtensionSequence({
 }: ExtensionSequenceProps) {
   const handleModelClick = (model: string) => {
     const newModel = model === selectedModel ? null : model;
-    const newSequence = newModel ? [newModel] : [];
-    if (includeHumanizer && newModel) {
-      newSequence.push(HUMANIZER);
-    }
-    onUpdateSequence(newSequence);
+    onUpdateSequence(newModel, includeHumanizer);
   };
 
   const handleHumanizerToggle = () => {
-    if (!selectedModel) return; // can't toggle without model
-    const newSequence = [selectedModel];
-    const newInclude = !includeHumanizer;
-    if (newInclude) newSequence.push(HUMANIZER);
-    onUpdateSequence(newSequence);
+    if (!selectedModel) return;
+    onUpdateSequence(selectedModel, !includeHumanizer);
   };
 
   return (
